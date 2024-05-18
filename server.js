@@ -1,4 +1,5 @@
-const http = require('http');
+const https = require('https');
+const fs = require('fs');
 const app = require('./app');
 
 const normalizePort = (val) => {
@@ -36,7 +37,13 @@ const errorHandler = (error) => {
   }
 };
 
-const server = http.createServer(app);
+// Charger le certificat et la clé privée
+const options = {
+  key: fs.readFileSync('server.key'),
+  cert: fs.readFileSync('server.cert'),
+};
+
+const server = https.createServer(options, app);
 
 server.on('error', errorHandler);
 server.on('listening', () => {

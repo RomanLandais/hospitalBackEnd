@@ -8,16 +8,11 @@ require('dotenv').config();
 app.use(cors()); // Pour permettre les requêtes Cross-Origin
 app.use(express.json()); // Gestion requête JSON
 
-// Configuration de la session pour stocker jeton CSRF sur cookie sécurisé
 app.use(
   session({
-    secret: process.env.SESSION_SECRET,
+    secret: process.env.SESSION_SECRET, // Clé secrète utilisée pour signer les cookies de session
     resave: false,
-    saveUninitialized: true,
-    cookie: {
-      secure: true,
-      httpOnly: true,
-    },
+    saveUninitialized: false,
   })
 );
 

@@ -42,7 +42,12 @@ module.exports = (db) => {
               });
               return;
             }
-            res.json({ message: 'Utilisateur enregistré avec succès' });
+            // Envoyer le cookie CSRF sécurisé dans la réponse
+            res.json({
+              csrfToken: req.session.csrfToken,
+
+              message: 'Utilisateur enregistré avec succès',
+            });
           }
         );
       });

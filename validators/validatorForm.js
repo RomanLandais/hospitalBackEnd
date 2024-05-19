@@ -2,7 +2,9 @@ const Joi = require('joi');
 
 const schema = Joi.object({
   email: Joi.string().email().required(),
+  confirmEmail: Joi.ref('email'),
   password: Joi.string().required(),
+  confirmPassword: Joi.ref('password'),
   lastName: Joi.string().required(),
   firstName: Joi.string().required(),
   address: Joi.string().required(),

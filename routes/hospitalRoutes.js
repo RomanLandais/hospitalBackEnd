@@ -1,11 +1,12 @@
 const express = require('express');
 const router = express.Router();
+const bcrypt = require('bcrypt');
 const { validateForm } = require('../validators/validatorForm');
 
 module.exports = (db) => {
   // Route pour recevoir les données du formulaire
 
-  router.post('/signin', validateForm, (req, res) => {
+  router.post('/signup', validateForm, (req, res) => {
     const { email, password, lastName, firstName, address } = req.body;
 
     bcrypt.hash(password, 10, (err, hash) => {
@@ -19,7 +20,7 @@ module.exports = (db) => {
 
       // Insérer les données et le mot de passe haché dans la base de données
       db.run(
-        'INSERT INTO Users (email, password, last_name, name, postal_adress) VALUES (?, ?, ?, ?, ?)',
+        'INSERT INTO Users (mail, password, last_name, name, postal_adress) VALUES (?, ?, ?, ?, ?)',
         [email, hash, lastName, firstName, address],
         (err) => {
           if (err) {

@@ -1,35 +1,39 @@
-const crypto = require('crypto');
-const app = require('../app');
-
-function generateCSRFToken() {
-  const token = crypto.randomBytes(32).toString('hex');
-  return token;
-}
-
-// Middleware pour générer et stocker le jeton CSRF dans la session utilisateur
-function generateCSRFTokenMiddleware(req, res, next) {
-  req.session.csrfToken = generateCSRFToken();
-  console.log('CSRF token généré :', req.session.csrfToken);
-  next();
-}
+const jwt = require('jsonwebtoken');
 
 // Middleware pour vérifier le jeton CSRF
 function csrfProtection(req, res, next) {
-  const tokenFromRequest =
-    req.body.csrfToken || req.query.csrfToken || req.headers['csrf-token'];
-  const tokenFromSession = req.session.csrfToken;
-  console.log('Token CSRF de la requête :', tokenFromRequest);
-  console.log('Token CSRF de la session :', tokenFromSession);
+  try {
+    // Vérifier si l'en-tête Authorization existe
+    if (
+      !req.headers.authorization ||
+      !req.headers.authorization.startsWith('Bearer ')
+    ) {
+      throw new Error('Authorization header missing or invalid');
+    }
 
-  if (!tokenFromRequest || tokenFromRequest !== tokenFromSession) {
-    return res.status(403).json({ error: 'Token CSRF invalide' });
+    // Extraire le token JWT de l'en-tête Authorization
+    const token = req.headers.authorization.split(' ')[1];
+
+    // Vérifier et décoder le token JWT
+    const decodedToken = jwt.verify(token, 'RANDOM_TOKEN_SECRET');
+
+    // Récupérer l'identifiant d'utilisateur à partir du token décodé
+    const userId = decodedToken.userId;
+
+    // Stocker l'identifiant d'utilisateur dans req.auth pour une utilisation ultérieure dans les routes
+    req.auth = {
+      userId: userId,
+    };
+
+    // Passer à la prochaine étape du middleware
+    next();
+  } catch (error) {
+    // Gérer les erreurs de vérification du token JWT
+    console.error('CSRF token verification failed:', error);
+    res.status(401).json({ error: 'Invalid CSRF token' });
   }
-
-  next();
 }
 
 module.exports = {
-  generateCSRFToken,
-  generateCSRFTokenMiddleware,
   csrfProtection,
 };

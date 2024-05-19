@@ -3,6 +3,7 @@ const router = express.Router();
 const bcrypt = require('bcrypt');
 const { validateSignUp } = require('../validators/validatorSignUp');
 const { validateSignIn } = require('../validators/validatorsSignIn');
+const { validateNewStay } = require('../validators/validatorNewStay');
 const {
   generateCSRFTokenMiddleware,
   csrfProtection,
@@ -34,11 +35,12 @@ module.exports = (db) => {
           (err) => {
             if (err) {
               console.error(
-                "Erreur lors de l'insertion dans la base de données :",
+                "Erreur lors de l'insertion dans la base de données User :",
                 err
               );
               res.status(500).json({
-                error: "Erreur lors de l'insertion dans la base de données",
+                error:
+                  "Erreur lors de l'insertion dans la base de données User",
               });
               return;
             }
@@ -104,6 +106,31 @@ module.exports = (db) => {
       });
     }
   );
+
+  // Route pour recevoir les données du formulaire création séjour
+  router.post('/newStay', validateNewStay, csrfProtection, (req, res) => {
+    const { startDate, endDate, reason, specialty, doctor } = req.body;
+
+    db.run(
+      'INSERT INTO Stay (stay_reason, doctor_specialty, start_date, end_date, doctor) VALUES (?, ?, ?, ?, ?)',
+      [reason, specialty, startDate, endDate, doctor],
+      (err) => {
+        if (err) {
+          console.error(
+            "Erreur lors de l'insertion dans la base de données Stay :",
+            err
+          );
+          res.status(500).json({
+            error: "Erreur lors de l'insertion dans la base de données Stay",
+          });
+          return;
+        }
+        res.json({
+          message: 'Séjour enregistré avec succès',
+        });
+      }
+    );
+  });
 
   return router;
 };

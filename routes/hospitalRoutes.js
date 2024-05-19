@@ -1,18 +1,18 @@
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcrypt');
-const { validateForm } = require('../validators/validatorForm');
+const { validateSignUp } = require('../validators/validatorSignUp');
+const { validateSignIn } = require('../validators/validatorsSignIn');
 const {
   generateCSRFTokenMiddleware,
   csrfProtection,
 } = require('../Tokens/csrf');
 
 module.exports = (db) => {
-  // Route pour recevoir les données du formulaire
-
+  // Route pour recevoir les données du formulaire d'inscription
   router.post(
     '/signup',
-    validateForm,
+    validateSignUp,
     generateCSRFTokenMiddleware,
     (req, res) => {
       const { email, password, lastName, firstName, address } = req.body;
@@ -50,6 +50,57 @@ module.exports = (db) => {
             });
           }
         );
+      });
+    }
+  );
+
+  // Route pour recevoir les données du formulaire de connexion
+  router.post(
+    '/signIn',
+    validateSignIn,
+    generateCSRFTokenMiddleware,
+    (req, res) => {
+      const { email, password } = req.body;
+
+      db.get('SELECT * FROM Users WHERE mail = ?', [email], (err, user) => {
+        if (err) {
+          console.error(
+            "Erreur lors de la récupération de l'utilisateur :",
+            err
+          );
+          res
+            .status(500)
+            .json({ error: "Erreur lors de la récupération de l'utilisateur" });
+          return;
+        }
+
+        if (!user) {
+          res.status(401).json({ error: 'Utilisateur non trouvé' });
+          return;
+        }
+
+        bcrypt.compare(password, user.password, (err, isMatch) => {
+          if (err) {
+            console.error(
+              'Erreur lors de la comparaison des mots de passe :',
+              err
+            );
+            res.status(500).json({
+              error: 'Erreur lors de la comparaison des mots de passe',
+            });
+            return;
+          }
+
+          if (!isMatch) {
+            res.status(401).json({ error: 'Mot de passe incorrect' });
+            return;
+          }
+
+          res.json({
+            csrfToken: req.session.csrfToken,
+            message: 'Connexion réussie',
+          });
+        });
       });
     }
   );

@@ -2,16 +2,11 @@ const Joi = require('joi');
 
 const schema = Joi.object({
   email: Joi.string().email().required(),
-  confirmEmail: Joi.ref('email'),
   password: Joi.string().required(),
-  confirmPassword: Joi.ref('password'),
-  lastName: Joi.string().required(),
-  firstName: Joi.string().required(),
-  address: Joi.string().required(),
 });
 
 // Middleware pour valider les données du formulaire
-const validateForm = (req, res, next) => {
+const validateSignIn = (req, res, next) => {
   const { error, value } = schema.validate(req.body);
 
   if (error) {
@@ -22,4 +17,4 @@ const validateForm = (req, res, next) => {
   next();
 };
 
-module.exports = { validateForm };
+module.exports = { validateSignIn };

@@ -5,7 +5,6 @@ function generateToken(user) {
   const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
     expiresIn: '12h',
   });
-  console.log('Token généré :', token);
   return token;
 }
 
@@ -15,7 +14,6 @@ function verifyToken(req, res, next) {
   const token = authHeader && authHeader.split(' ')[1];
 
   if (!token) {
-    console.log('Token manquant. Veuillez vous connecter.');
     return res
       .status(401)
       .json({ error: 'Token manquant. Veuillez vous connecter.' });
@@ -23,7 +21,6 @@ function verifyToken(req, res, next) {
 
   jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, user) => {
     if (err) {
-      console.log('Token invalide ou expiré.');
       return res.status(403).json({ error: 'Token invalide ou expiré.' });
     }
     req.user = user;

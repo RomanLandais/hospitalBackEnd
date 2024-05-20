@@ -1,39 +1,37 @@
 const jwt = require('jsonwebtoken');
 
-// Middleware pour vérifier le jeton CSRF
-function csrfProtection(req, res, next) {
-  try {
-    // Vérifier si l'en-tête Authorization existe
-    if (
-      !req.headers.authorization ||
-      !req.headers.authorization.startsWith('Bearer ')
-    ) {
-      throw new Error('Authorization header missing or invalid');
-    }
+// Fonction pour générer un token JWT
+function generateToken(user) {
+  const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
+    expiresIn: '12h',
+  });
+  console.log('Token généré :', token);
+  return token;
+}
 
-    // Extraire le token JWT de l'en-tête Authorization
-    const token = req.headers.authorization.split(' ')[1];
+// Middleware pour vérifier le token JWT
+function verifyToken(req, res, next) {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
 
-    // Vérifier et décoder le token JWT
-    const decodedToken = jwt.verify(token, 'RANDOM_TOKEN_SECRET');
-
-    // Récupérer l'identifiant d'utilisateur à partir du token décodé
-    const userId = decodedToken.userId;
-
-    // Stocker l'identifiant d'utilisateur dans req.auth pour une utilisation ultérieure dans les routes
-    req.auth = {
-      userId: userId,
-    };
-
-    // Passer à la prochaine étape du middleware
-    next();
-  } catch (error) {
-    // Gérer les erreurs de vérification du token JWT
-    console.error('CSRF token verification failed:', error);
-    res.status(401).json({ error: 'Invalid CSRF token' });
+  if (!token) {
+    console.log('Token manquant. Veuillez vous connecter.');
+    return res
+      .status(401)
+      .json({ error: 'Token manquant. Veuillez vous connecter.' });
   }
+
+  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, user) => {
+    if (err) {
+      console.log('Token invalide ou expiré.');
+      return res.status(403).json({ error: 'Token invalide ou expiré.' });
+    }
+    req.user = user;
+    next();
+  });
 }
 
 module.exports = {
-  csrfProtection,
+  verifyToken,
+  generateToken,
 };

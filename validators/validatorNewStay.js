@@ -5,7 +5,7 @@ const schema = Joi.object({
   endDate: Joi.date().required(),
   reason: Joi.string().required(),
   specialty: Joi.string().required(),
-  doctor: Joi.string().required(),
+  doctor: Joi.number().required(),
 });
 
 // Middleware pour valider les données du formulaire

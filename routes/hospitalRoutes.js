@@ -122,7 +122,7 @@ module.exports = (db) => {
     const userId = req.headers['x-user-id'];
 
     db.run(
-      'INSERT INTO Stay (stay_reason, doctor_specialty, start_date, end_date, doctor_name, id_user) VALUES (?, ?, ?, ?, ?, ?)',
+      'INSERT INTO Stay (stay_reason, doctor_specialty, start_date, end_date, id_doctor, id_user) VALUES (?, ?, ?, ?, ?, ?)',
       [reason, specialty, startDate, endDate, doctor, userId],
       (insertErr) => {
         if (insertErr) {

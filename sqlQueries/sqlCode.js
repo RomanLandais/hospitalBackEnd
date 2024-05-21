@@ -69,3 +69,11 @@ WHERE
 
     `;
 };
+
+exports.getDoctorsQuery = () => {
+  return `SELECT id_doctor, last_name, name, specialty FROM Doctors`;
+};
+
+exports.getUsersQuery = () => {
+  return `SELECT last_name, name, id_user FROM Users`;
+};

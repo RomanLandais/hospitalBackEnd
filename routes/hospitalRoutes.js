@@ -11,7 +11,11 @@ const {
   getLastStaysQuery,
   getCurrentStaysQuery,
   getComingStaysQuery,
+  getDoctorsQuery,
+  getUsersQuery,
 } = require('../sqlQueries/sqlCode');
+const { validateNewDoctor } = require('../validators/validatorNewDoctor');
+const { validateNewSchedule } = require('../validators/validatorNewSchedule');
 
 module.exports = (db) => {
   /* --------------------------------------------------------------------------------------------------------------------------------
@@ -199,6 +203,103 @@ module.exports = (db) => {
       }
       res.status(200).json({ comingStays: rows });
     });
+  });
+
+  /* --------------------------------------------------------------------------------------------------------------------------------
+  Route pour charger les données doctors
+  -------------------------------------------------------------------------------------------------------------------------------- */
+  router.get('/loadDoctors', verifyToken, (req, res) => {
+    const query = getDoctorsQuery();
+
+    db.all(query, [], (err, rows) => {
+      if (err) {
+        console.error(
+          'Erreur lors de la récupération des données docteur :',
+          err
+        );
+        return res
+          .status(500)
+          .json({ error: 'Erreur lors de la récupération données docteur' });
+      }
+
+      res.status(200).json({ doctors: rows });
+    });
+  });
+
+  /* --------------------------------------------------------------------------------------------------------------------------------
+  Route pour charger les données users (id, nom et prénom)
+  -------------------------------------------------------------------------------------------------------------------------------- */
+  router.get('/loadUsers', verifyToken, (req, res) => {
+    const query = getUsersQuery();
+
+    db.all(query, [], (err, rows) => {
+      if (err) {
+        console.error('Erreur lors de la récupération des données user :', err);
+        return res
+          .status(500)
+          .json({ error: 'Erreur lors de la récupération données user' });
+      }
+
+      res.status(200).json({ users: rows });
+    });
+  });
+
+  /* --------------------------------------------------------------------------------------------------------------------------------
+  Route pour recevoir les données nouveau médecin
+  -------------------------------------------------------------------------------------------------------------------------------- */
+  router.post('/newDoctor', validateNewDoctor, verifyToken, (req, res) => {
+    const { firstName, lastName, specialty } = req.body;
+
+    db.run(
+      'INSERT INTO Doctors (last_name, name, specialty) VALUES (?, ?, ?)',
+      [lastName, firstName, specialty],
+      (insertErr) => {
+        if (insertErr) {
+          console.error(
+            "Erreur lors de l'insertion dans la base de données Doctors :",
+            insertErr
+          );
+          return res.status(500).json({
+            error: "Erreur lors de l'insertion dans la base de données Doctors",
+          });
+        }
+
+        res.status(200).json({ message: 'Docteur enregistré avec succès' });
+      }
+    );
+  });
+
+  /* --------------------------------------------------------------------------------------------------------------------------------
+  Route pour recevoir les données création plannning médecin
+  -------------------------------------------------------------------------------------------------------------------------------- */
+  router.post('/newSchedule', validateNewSchedule, verifyToken, (req, res) => {
+    const {
+      consultDate,
+      doctor,
+      patient1,
+      patient2,
+      patient3,
+      patient4,
+      patient5,
+    } = req.body;
+
+    console.log('req.body newschedule :', req.body);
+    db.run(
+      'INSERT INTO Schedule (date, id_doctor, id_patient1, id_patient2, id_patient3, id_patient4, id_patient5) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [consultDate, doctor, patient1, patient2, patient3, patient4, patient5],
+      (insertErr) => {
+        if (insertErr) {
+          console.error(
+            "Erreur lors de l'insertion dans la base de données Doctors :",
+            insertErr
+          );
+          return res.status(500).json({
+            error: "Erreur lors de l'insertion dans la base de données Doctors",
+          });
+        }
+        res.status(200).json({ message: 'Docteur enregistré avec succès' });
+      }
+    );
   });
 
   return router;

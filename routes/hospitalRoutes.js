@@ -7,7 +7,11 @@ const { validateSignIn } = require('../validators/validatorsSignIn');
 const { validateNewStay } = require('../validators/validatorNewStay');
 const { generateToken } = require('../Tokens/csrf');
 const { verifyToken } = require('../Tokens/csrf');
-const { getLastStaysQuery } = require('../sqlQueries/sqlCode');
+const {
+  getLastStaysQuery,
+  getCurrentStaysQuery,
+  getComingStaysQuery,
+} = require('../sqlQueries/sqlCode');
 
 module.exports = (db) => {
   /* --------------------------------------------------------------------------------------------------------------------------------
@@ -135,22 +139,65 @@ module.exports = (db) => {
   /* --------------------------------------------------------------------------------------------------------------------------------
   Route pour renvoyer les données des séjours
   -------------------------------------------------------------------------------------------------------------------------------- */
-
+  //Séjours précédents
   router.get('/lastStays', verifyToken, (req, res) => {
     const userId = req.headers['x-user-id'];
-    console.log('userId received :', userId);
 
     const query = getLastStaysQuery(userId);
 
     db.all(query, [], (err, rows) => {
       if (err) {
-        console.error('Erreur lors de la récupération des séjours :', err);
+        console.error(
+          'Erreur lors de la récupération des séjours lastStay :',
+          err
+        );
         return res
           .status(500)
           .json({ error: 'Erreur lors de la récupération des séjours' });
       }
 
       res.status(200).json({ lastStays: rows });
+    });
+  });
+
+  //Séjours actuels
+  router.get('/currentStays', verifyToken, (req, res) => {
+    const userId = req.headers['x-user-id'];
+
+    const query = getCurrentStaysQuery(userId);
+
+    db.all(query, [], (err, rows) => {
+      if (err) {
+        console.error(
+          'Erreur lors de la récupération des séjours CurrentStays :',
+          err
+        );
+        return res
+          .status(500)
+          .json({ error: 'Erreur lors de la récupération des séjours' });
+      }
+
+      res.status(200).json({ currentStays: rows });
+    });
+  });
+
+  //séjour à venir
+  router.get('/comingStays', verifyToken, (req, res) => {
+    const userId = req.headers['x-user-id'];
+
+    const query = getComingStaysQuery(userId);
+
+    db.all(query, [], (err, rows) => {
+      if (err) {
+        console.error(
+          'Erreur lors de la récupération des séjours ComingStays :',
+          err
+        );
+        return res
+          .status(500)
+          .json({ error: 'Erreur lors de la récupération des séjours' });
+      }
+      res.status(200).json({ comingStays: rows });
     });
   });
 

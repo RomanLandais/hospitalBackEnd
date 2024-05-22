@@ -16,6 +16,10 @@ const {
 } = require('../sqlQueries/sqlCode');
 const { validateNewDoctor } = require('../validators/validatorNewDoctor');
 const { validateNewSchedule } = require('../validators/validatorNewSchedule');
+const {
+  upgradeScheduleQuery,
+  upgradeStayQuery,
+} = require('../sqlQueries/sqlUpdateBDD');
 
 module.exports = (db) => {
   /* --------------------------------------------------------------------------------------------------------------------------------
@@ -99,8 +103,10 @@ module.exports = (db) => {
           return res.status(401).json({ error: 'Mot de passe incorrect' });
         }
 
-        // Récupérer l'userId de l'utilisateur
+        // Récupérer l'userId de l'utilisateur, s'il est Admin ou secrétaire
         const userId = user.id_user;
+        const isAdmin = user.admin;
+        const isSecretary = user.secretary;
 
         // Générer un token JWT
         const token = generateToken({ email, userId });
@@ -108,6 +114,8 @@ module.exports = (db) => {
         res.status(200).json({
           token,
           userId,
+          isAdmin,
+          isSecretary,
           message: 'Connexion réussie',
         });
       });
@@ -138,6 +146,18 @@ module.exports = (db) => {
         res.status(200).json({ message: 'Séjour enregistré avec succès' });
       }
     );
+
+    // Lancer la mise à jour de la table Stay en arrière-plan
+    db.run(upgradeStayQuery(), (err) => {
+      if (err) {
+        console.error(
+          'Erreur lors de la mise à jour dans la base de données Stay :',
+          err
+        );
+      } else {
+        console.log('Séjour mis à jour avec succès');
+      }
+    });
   });
 
   /* --------------------------------------------------------------------------------------------------------------------------------
@@ -284,20 +304,39 @@ module.exports = (db) => {
     } = req.body;
 
     console.log('req.body newschedule :', req.body);
+
+    // Insérer le nouvel emploi du temps
     db.run(
       'INSERT INTO Schedule (date, id_doctor, id_patient1, id_patient2, id_patient3, id_patient4, id_patient5) VALUES (?, ?, ?, ?, ?, ?, ?)',
       [consultDate, doctor, patient1, patient2, patient3, patient4, patient5],
       (insertErr) => {
         if (insertErr) {
           console.error(
-            "Erreur lors de l'insertion dans la base de données Doctors :",
+            "Erreur lors de l'insertion dans la base de données Schedule :",
             insertErr
           );
           return res.status(500).json({
-            error: "Erreur lors de l'insertion dans la base de données Doctors",
+            error:
+              "Erreur lors de l'insertion dans la base de données Schedule",
           });
         }
-        res.status(200).json({ message: 'Docteur enregistré avec succès' });
+
+        // Répondre immédiatement à l'utilisateur
+        res
+          .status(200)
+          .json({ message: 'Emploi du temps enregistré avec succès' });
+
+        // Lancer la mise à jour de la table Schedule en arrière-plan
+        db.run(upgradeScheduleQuery(), (err) => {
+          if (err) {
+            console.error(
+              'Erreur lors de la mise à jour dans la base de données Schedule :',
+              err
+            );
+          } else {
+            console.log('Emploi du temps mis à jour avec succès');
+          }
+        });
       }
     );
   });

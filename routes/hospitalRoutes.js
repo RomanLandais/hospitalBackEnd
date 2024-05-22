@@ -55,7 +55,6 @@ module.exports = (db) => {
 
           // Récupérer l'userId nouvellement créé
           const userId = this.lastID;
-          console.log('userId :', userId);
 
           // Générer un token JWT
           const token = generateToken({ email, userId });
@@ -302,8 +301,6 @@ module.exports = (db) => {
       patient4,
       patient5,
     } = req.body;
-
-    console.log('req.body newschedule :', req.body);
 
     // Insérer le nouvel emploi du temps
     db.run(

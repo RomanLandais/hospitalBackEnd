@@ -22,32 +22,32 @@ exports.upgradeScheduleQuery = () => {
   return `
   UPDATE Schedule
   SET doctor_name = (
-      SELECT last_name
+      SELECT last_name || ' ' || name
       FROM Doctors
       WHERE Doctors.id_doctor = Schedule.id_doctor
   ),
   patient_name1 = (
-      SELECT last_name
+      SELECT last_name || ' ' || name
       FROM Users
       WHERE Users.id_user = Schedule.id_patient1
   ),
   patient_name2 = (
-      SELECT last_name
+      SELECT last_name || ' ' || name
       FROM Users
       WHERE Users.id_user = Schedule.id_patient2
   ),
   patient_name3 = (
-      SELECT last_name
+      SELECT last_name || ' ' || name
       FROM Users
       WHERE Users.id_user = Schedule.id_patient3
   ),
   patient_name4 = (
-      SELECT last_name
+      SELECT last_name || ' ' || name
       FROM Users
       WHERE Users.id_user = Schedule.id_patient4
   ),
   patient_name5 = (
-      SELECT last_name
+      SELECT last_name || ' ' || name
       FROM Users
       WHERE Users.id_user = Schedule.id_patient5
   );

@@ -70,7 +70,7 @@ module.exports = (db) => {
   });
 
   /* --------------------------------------------------------------------------------------------------------------------------------
-  Route pour recevoir les données du formulaire de connexion
+  Route pour recevoir les données du formulaire de connexion Web
   -------------------------------------------------------------------------------------------------------------------------------- */
   router.post('/signIn', validateSignIn, (req, res) => {
     const { email, password } = req.body;
@@ -336,6 +336,62 @@ module.exports = (db) => {
         });
       }
     );
+  });
+
+  /* --------------------------------------------------------------------------------------------------------------------------------
+  Route pour recevoir les données du formulaire de connexion Mobil
+  -------------------------------------------------------------------------------------------------------------------------------- */
+  router.post('/signInMobil', validateSignIn, (req, res) => {
+    const { email, password } = req.body;
+
+    db.get('SELECT * FROM Users WHERE mail = ?', [email], (err, user) => {
+      if (err) {
+        console.error("Erreur lors de la récupération de l'utilisateur :", err);
+        return res
+          .status(500)
+          .json({ error: "Erreur lors de la récupération de l'utilisateur" });
+      }
+
+      if (!user) {
+        return res.status(401).json({ error: 'Utilisateur non trouvé' });
+      }
+
+      if (!user.doctor) {
+        return res
+          .status(401)
+          .json({
+            error: 'Accès refusé. Seuls les médecins peuvent se connecter.',
+          });
+      }
+
+      bcrypt.compare(password, user.password, (err, isMatch) => {
+        if (err) {
+          console.error(
+            'Erreur lors de la comparaison des mots de passe :',
+            err
+          );
+          return res.status(500).json({
+            error: 'Erreur lors de la comparaison des mots de passe',
+          });
+        }
+
+        if (!isMatch) {
+          return res.status(401).json({ error: 'Mot de passe incorrect' });
+        }
+
+        // Récupérer l'userId de l'utilisateur
+        const userId = user.id_user;
+
+        // Générer un token JWT
+        const token = generateToken({ email, userId });
+
+        res.status(200).json({
+          token,
+          userId,
+          message: 'Connexion réussie',
+        });
+      });
+    });
   });
 
   return router;

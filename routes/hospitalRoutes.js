@@ -13,9 +13,12 @@ const {
   getComingStaysQuery,
   getDoctorsQuery,
   getUsersQuery,
+  getStayQuery,
 } = require('../sqlQueries/sqlCode');
 const { validateNewDoctor } = require('../validators/validatorNewDoctor');
 const { validateNewSchedule } = require('../validators/validatorNewSchedule');
+const { validateAvis } = require('../validators/validatorAvis');
+const { validatePrescription } = require('../validators/validatorPrescription');
 const {
   upgradeScheduleQuery,
   upgradeStayQuery,
@@ -180,6 +183,7 @@ module.exports = (db) => {
       }
 
       res.status(200).json({ lastStays: rows });
+      console.log('rows', rows);
     });
   });
 
@@ -264,6 +268,24 @@ module.exports = (db) => {
   });
 
   /* --------------------------------------------------------------------------------------------------------------------------------
+  Route pour charger les données stay (id, date)
+  -------------------------------------------------------------------------------------------------------------------------------- */
+  router.get('/loadStay', verifyToken, (req, res) => {
+    const query = getStayQuery();
+
+    db.all(query, [], (err, rows) => {
+      if (err) {
+        console.error('Erreur lors de la récupération des données stay :', err);
+        return res
+          .status(500)
+          .json({ error: 'Erreur lors de la récupération données stay' });
+      }
+
+      res.status(200).json({ users: rows });
+    });
+  });
+
+  /* --------------------------------------------------------------------------------------------------------------------------------
   Route pour recevoir les données nouveau médecin
   -------------------------------------------------------------------------------------------------------------------------------- */
   router.post('/newDoctor', validateNewDoctor, verifyToken, (req, res) => {
@@ -289,7 +311,7 @@ module.exports = (db) => {
   });
 
   /* --------------------------------------------------------------------------------------------------------------------------------
-  Route pour recevoir les données création plannning médecin
+    Route pour recevoir les données création plannning médecin
   -------------------------------------------------------------------------------------------------------------------------------- */
   router.post('/newSchedule', validateNewSchedule, verifyToken, (req, res) => {
     const {
@@ -339,7 +361,8 @@ module.exports = (db) => {
   });
 
   /* --------------------------------------------------------------------------------------------------------------------------------
-  Route pour recevoir les données du formulaire de connexion Mobil
+  Mobil :
+  Route pour recevoir les données du formulaire de connexion 
   -------------------------------------------------------------------------------------------------------------------------------- */
   router.post('/signInMobil', validateSignIn, (req, res) => {
     const { email, password } = req.body;
@@ -357,11 +380,9 @@ module.exports = (db) => {
       }
 
       if (!user.doctor) {
-        return res
-          .status(401)
-          .json({
-            error: 'Accès refusé. Seuls les médecins peuvent se connecter.',
-          });
+        return res.status(401).json({
+          error: 'Accès refusé. Seuls les médecins peuvent se connecter.',
+        });
       }
 
       bcrypt.compare(password, user.password, (err, isMatch) => {
@@ -393,6 +414,87 @@ module.exports = (db) => {
       });
     });
   });
+
+  /* --------------------------------------------------------------------------------------------------------------------------------
+ Mobil :
+ Route pour recevoir les données du formulaire Avis 
+  -------------------------------------------------------------------------------------------------------------------------------- */
+  router.post('/Avis', validateAvis, verifyToken, (req, res) => {
+    const { date, description, idDoctor, idUser, idStay, titre } = req.body;
+
+    db.run(
+      'INSERT INTO Consultations (date, description, id_doctor, id_user, id_stay, title) VALUES (?, ?, ?, ?, ?, ?)',
+      [date, description, idDoctor, idUser, idStay, titre],
+      (insertErr) => {
+        if (insertErr) {
+          console.error(
+            "Erreur lors de l'insertion dans la base de données Consultations :",
+            insertErr
+          );
+          return res.status(500).json({
+            error:
+              "Erreur lors de l'insertion dans la base de données Consultations",
+          });
+        }
+
+        res
+          .status(200)
+          .json({ message: 'Consultations enregistré avec succès' });
+      }
+    );
+  });
+
+  /* --------------------------------------------------------------------------------------------------------------------------------
+ Mobil :
+ Route pour recevoir les données du formulaire Prescription 
+  -------------------------------------------------------------------------------------------------------------------------------- */
+  router.post(
+    '/Prescription',
+    validatePrescription,
+    verifyToken,
+    (req, res) => {
+      const {
+        dateDebut,
+        dateFin,
+        idDoctor,
+        idUser,
+        idStay,
+        medicament,
+        posologie,
+        soigne,
+      } = req.body;
+
+      db.run(
+        'INSERT INTO Prescription (start_date, end_date, id_doctor, id_user, id_stay, medicament_name, posology, cured) VALUES (?, ?, ?, ?, ?, ?, ? , ?)',
+        [
+          dateDebut,
+          dateFin,
+          idDoctor,
+          idUser,
+          idStay,
+          medicament,
+          posologie,
+          soigne,
+        ],
+        (insertErr) => {
+          if (insertErr) {
+            console.error(
+              "Erreur lors de l'insertion dans la base de données Prescription :",
+              insertErr
+            );
+            return res.status(500).json({
+              error:
+                "Erreur lors de l'insertion dans la base de données Prescription",
+            });
+          }
+
+          res
+            .status(200)
+            .json({ message: 'Consultations enregistré avec succès' });
+        }
+      );
+    }
+  );
 
   return router;
 };

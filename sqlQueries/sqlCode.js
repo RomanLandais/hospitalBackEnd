@@ -77,3 +77,7 @@ exports.getDoctorsQuery = () => {
 exports.getUsersQuery = () => {
   return `SELECT last_name, name, id_user FROM Users`;
 };
+
+exports.getStayQuery = () => {
+  return `SELECT id_stay, start_date, id_user FROM Stay`;
+};

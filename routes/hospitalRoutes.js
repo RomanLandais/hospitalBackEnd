@@ -22,6 +22,8 @@ const { validatePrescription } = require('../validators/validatorPrescription');
 const {
   upgradeScheduleQuery,
   upgradeStayQuery,
+  updadeConsultationQuery,
+  upgradeStayIdDoctorQuery,
 } = require('../sqlQueries/sqlUpdateBDD');
 
 module.exports = (db) => {
@@ -183,7 +185,6 @@ module.exports = (db) => {
       }
 
       res.status(200).json({ lastStays: rows });
-      console.log('rows', rows);
     });
   });
 
@@ -442,6 +443,42 @@ module.exports = (db) => {
           .json({ message: 'Consultations enregistré avec succès' });
       }
     );
+
+    // Lancer la mise à jour de la table Consultation en arrière-plan
+    db.run(updadeConsultationQuery(), (err) => {
+      if (err) {
+        console.error(
+          'Erreur lors de la mise à jour dans la base de données Consultation :',
+          err
+        );
+      } else {
+        console.log('Consultation mis à jour avec succès');
+      }
+    });
+
+    // Lancer la mise à jour des ID la table Stay en arrière-plan
+    db.run(upgradeStayIdDoctorQuery(), (err) => {
+      if (err) {
+        console.error(
+          'Erreur lors de la mise à jour dans la base de données Stay :',
+          err
+        );
+      } else {
+        console.log('Stay mis à jour avec succès');
+      }
+    });
+
+    // Lancer la mise à jour de la table Stay en arrière-plan
+    db.run(upgradeStayQuery(), (err) => {
+      if (err) {
+        console.error(
+          'Erreur lors de la mise à jour dans la base de données Stay :',
+          err
+        );
+      } else {
+        console.log('Stay mis à jour avec succès');
+      }
+    });
   });
 
   /* --------------------------------------------------------------------------------------------------------------------------------

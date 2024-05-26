@@ -1,23 +1,3 @@
-exports.updateConsultationsQuery = () => {
-  return `
-      UPDATE Consultations
-      SET doctor_last_name = (
-        SELECT last_name 
-        FROM Doctors 
-        WHERE Doctors.id_doctor = Consultations.id_doctor
-      ),
-      doctor_name = (
-        SELECT name 
-        FROM Doctors 
-        WHERE Doctors.id_doctor = Consultations.id_doctor
-      )
-      WHERE id_doctor IN (
-        SELECT id_doctor 
-        FROM Doctors
-      );
-    `;
-};
-
 exports.upgradeScheduleQuery = () => {
   return `
   UPDATE Schedule
@@ -57,7 +37,7 @@ exports.upgradeScheduleQuery = () => {
 exports.upgradeStayQuery = () => {
   return `
       UPDATE Stay
-      SET doctor_name = (
+         SET  doctor_name = (
           SELECT last_name
           FROM Doctors
           WHERE Doctors.id_doctor = Stay.id_doctor
@@ -73,4 +53,33 @@ exports.upgradeStayQuery = () => {
           WHERE Users.id_user = Stay.id_user
       );
     `;
+};
+
+exports.updadeConsultationQuery = () => {
+  return `
+          UPDATE Consultations
+          SET doctor_last_name = (
+              SELECT last_name
+              FROM Doctors
+              WHERE Doctors.id_doctor = Consultations.id_doctor
+          ),
+          doctor_name = (
+              SELECT name
+              FROM Doctors
+              WHERE Doctors.id_doctor = Consultations.id_doctor
+          );
+
+        `;
+};
+
+exports.upgradeStayIdDoctorQuery = () => {
+  return `
+  UPDATE Stay
+  SET id_doctor = (
+    SELECT COALESCE(
+      (SELECT id_doctor FROM Consultations WHERE Consultations.id_stay = Stay.id_stay),
+      Stay.id_doctor
+    )
+  ); 
+`;
 };

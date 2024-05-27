@@ -14,6 +14,9 @@ const {
   getDoctorsQuery,
   getUsersQuery,
   getStayQuery,
+  getEntryQuery,
+  getExitQuery,
+  getUserInfoQuery,
 } = require('../sqlQueries/sqlCode');
 const { validateNewDoctor } = require('../validators/validatorNewDoctor');
 const { validateNewSchedule } = require('../validators/validatorNewSchedule');
@@ -532,6 +535,125 @@ module.exports = (db) => {
       );
     }
   );
+
+  /* --------------------------------------------------------------------------------------------------------------------------------
+  Desktop :
+  Route pour recevoir les données du formulaire de connexion 
+  -------------------------------------------------------------------------------------------------------------------------------- */
+  router.post('/signInDesktop', validateSignIn, (req, res) => {
+    const { email, password } = req.body;
+
+    db.get('SELECT * FROM Users WHERE mail = ?', [email], (err, user) => {
+      if (err) {
+        console.error("Erreur lors de la récupération de l'utilisateur :", err);
+        return res
+          .status(500)
+          .json({ error: "Erreur lors de la récupération de l'utilisateur" });
+      }
+
+      if (!user) {
+        return res.status(401).json({ error: 'Utilisateur non trouvé' });
+      }
+
+      if (!user.secretary) {
+        return res.status(401).json({
+          error: 'Accès refusé. Seuls les secrétaires peuvent se connecter.',
+        });
+      }
+
+      bcrypt.compare(password, user.password, (err, isMatch) => {
+        if (err) {
+          console.error(
+            'Erreur lors de la comparaison des mots de passe :',
+            err
+          );
+          return res.status(500).json({
+            error: 'Erreur lors de la comparaison des mots de passe',
+          });
+        }
+
+        if (!isMatch) {
+          return res.status(401).json({ error: 'Mot de passe incorrect' });
+        }
+
+        // Récupérer l'userId de l'utilisateur
+        const userId = user.id_user;
+
+        // Générer un token JWT
+        const token = generateToken({ email, userId });
+
+        res.status(200).json({
+          token,
+          userId,
+          message: 'Connexion réussie',
+        });
+      });
+    });
+  });
+
+  /* --------------------------------------------------------------------------------------------------------------------------------
+  Desktop :
+  Routes pour afficher les entrées et sorties du jour
+  -------------------------------------------------------------------------------------------------------------------------------- */
+  //personne entrante ce jour
+  router.get('/entryStay', verifyToken, (req, res) => {
+    const query = getEntryQuery();
+
+    db.all(query, [], (err, rows) => {
+      if (err) {
+        console.error(
+          'Erreur lors de la récupération des séjours entryStay :',
+          err
+        );
+        return res.status(500).json({
+          error: 'Erreur lors de la récupération des séjours entryStay',
+        });
+      }
+      res.status(200).json({ entryStay: rows });
+    });
+  });
+
+  //personne sortante ce jour
+  router.get('/exitStay', verifyToken, (req, res) => {
+    const query = getExitQuery();
+
+    db.all(query, [], (err, rows) => {
+      if (err) {
+        console.error(
+          'Erreur lors de la récupération des séjours exitStay :',
+          err
+        );
+        return res.status(500).json({
+          error: 'Erreur lors de la récupération des séjours exitStay',
+        });
+      }
+      res.status(200).json({ exitStay: rows });
+    });
+  });
+
+  /* --------------------------------------------------------------------------------------------------------------------------------
+  Desktop :
+  Routes pour afficher les infos utilisateurs
+  -------------------------------------------------------------------------------------------------------------------------------- */
+  router.get('/infoUser', verifyToken, (req, res) => {
+    const userId = req.query.userId;
+    const stayId = req.query.stayId;
+
+    const query = getUserInfoQuery(userId, stayId);
+
+    db.all(query, [], (err, rows) => {
+      if (err) {
+        console.error(
+          'Erreur lors de la récupération des infos infoUser :',
+          err
+        );
+        return res.status(500).json({
+          error: 'Erreur lors de la récupération des infos infoUser',
+        });
+      }
+      res.status(200).json({ infoUser: rows });
+    });
+  });
 
   return router;
 };

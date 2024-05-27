@@ -81,3 +81,38 @@ exports.getUsersQuery = () => {
 exports.getStayQuery = () => {
   return `SELECT id_stay, start_date, id_user FROM Stay`;
 };
+
+exports.getEntryQuery = () => {
+  return `
+      SELECT id_stay, id_user, user_name, start_date, end_date, stay_reason, doctor_specialty, doctor_name
+      FROM Stay 
+      WHERE start_date = DATE('now')
+  `;
+};
+
+exports.getExitQuery = () => {
+  return `
+      SELECT id_stay, id_user, user_name, start_date, end_date, stay_reason, doctor_specialty, doctor_name 
+      FROM Stay 
+      WHERE end_date = DATE('now')
+  `;
+};
+
+exports.getUserInfoQuery = (userId, stayId) => {
+  return `SELECT 
+  u.last_name, 
+  u.name, 
+  u.mail, 
+  u.postal_adress,
+  c.description AS consultation_description,
+  p.medicament_name,
+  p.posology,
+  p.start_date AS prescription_start_date,
+  p.end_date AS prescription_end_date
+FROM 
+  users u
+  LEFT JOIN Consultations c ON u.id_user = c.id_user AND c.id_stay = ${stayId}
+  LEFT JOIN Prescription p ON u.id_user = p.id_user AND p.id_stay = ${stayId}
+WHERE 
+  u.id_user = ${userId};`;
+};

@@ -2,7 +2,7 @@ ECF hospital Studi backEnd, construit avec node.js et angular ainsi que le frame
 
 
 Déploiement en local :
-- clôner le déot GitHub localement
+- cloner le dépot GitHub localement
 
 - installer les dépendances nécessaires : npm install
 
@@ -12,6 +12,6 @@ ACCESS_TOKEN_SECRET=f764ea2977769663ff6888e2904c7149e2ed40d5ac6a48f8c56410d479cb
 
 - configurer la base de donnée à partir des fichiers du dépôt GitHub correspondant
 
-- pour un fonctionnement en mode développement : nodemon server
+- Pour un fonctionnement en mode développement, rentrer la commande suivante dans le terminal : nodemon server
 
-- lancer le projet : npm start
+- Déployer l’application, rentrer la commande suivante dans le terminal : npm start
